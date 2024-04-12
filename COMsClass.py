@@ -1,5 +1,6 @@
 import serial.tools.list_ports  
 import time
+import threading
 
 
 class SerialCtrl():
@@ -72,7 +73,7 @@ class SerialCtrl():
                     
                     gui.conn.btn_start_stream["state"] = "active"
                     gui.conn.btn_add_chart["state"] = "active"
-                    gui.conn.btn_kill_chart["state"] = "active"
+                    gui.conn.btn_start_gph["state"] = "active"
                     gui.conn.save_check["state"] = "active"
                     gui.conn.sync_status["text"] = "OK"
                     gui.conn.sync_status["fg"] = "green"
@@ -119,9 +120,12 @@ class SerialCtrl():
                 gui.data.RowMsg = self.ser.readline()
                 # print(f"RowMsg: {gui.data.RowMsg}")
                 gui.data.DecodeMsg()
-                gui.data.UpdataXdata()
-                gui.data.UpdataYdata()
-                gui.data.AdjustData()
+                if gui.data.SynchChannel ==8:
+                    gui.data.UpdataXdata()
+                    gui.data.UpdataYdata()
+                    gui.data.AdjustData()
+                
+                    #print(gui.data.Ydis)
                 #Ysam = [Ys[len(gui.data.XData)-1] for Ys in gui.data.YData]
                 #print(f"x: {gui.data.XData[len(gui.data.XData)-1]}  y:{Ysam}")
                 #print(f"{len(gui.data.XData)}, {len(gui.data.YData[0])}")

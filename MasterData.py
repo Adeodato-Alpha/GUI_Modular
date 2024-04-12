@@ -60,5 +60,8 @@ class DataMaster():
             for ydata in self.YData:
                 del ydata[0]
         x = np.array(self.XData)
-        self.XDisplay = np.linspace(x.min(), x.max(), len(x), endpoint=0)
-        self.YDisplay =  np.array(self.YData)
+        self.Xdis = np.linspace(x.min(), x.max(), len(x), endpoint=0)
+        self.Ydis=  np.array(self.YData)
+
+    def plotingShit(self,gui):
+        gui.char.plot(gui.x,gui.y)

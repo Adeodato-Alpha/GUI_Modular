@@ -2,7 +2,8 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 import threading
-
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 class RootGUI():
     def __init__(self,serial,data):
         '''Initializing the root GUI and other comps of the program'''
@@ -32,6 +33,7 @@ class ComGui():
         self.root = root
         self.serial = serial
         self.data =data
+        
         self.frame = LabelFrame(root, text="Com Manager",
                                 padx=5, pady=5, bg="white")
         self.label_com = Label(
@@ -135,6 +137,7 @@ class ComGui():
                 messagebox.showerror("showerror", ErrorMsg)
         else:
             self.serial.threading = False
+            self.conn.graph = False
             # Closing the Serial COM
             # Close the serial communication
             self.serial.SerialClose(self)
@@ -158,7 +161,7 @@ class ConnGUI():
         self.data = data
         self.root = root
         self.serial = serial
-
+        self.graph = False
         # Build ConnGui Static Elements
         self.frame = LabelFrame(root, text="Connection Manager",
                                 padx=5, pady=5, bg="white", width=60)
@@ -174,7 +177,9 @@ class ConnGUI():
 
         self.btn_start_stream = Button(self.frame, text="Start", state="disabled",
                                        width=5, command=self.start_stream)
-
+        
+        self.btn_start_gph = Button(self.frame, text="Start", state="disabled",
+                                       width=5, command=self.UpdateChart)
         self.btn_stop_stream = Button(self.frame, text="Stop", state="disabled",
                                       width=5, command=self.stop_stream)
 
@@ -182,9 +187,7 @@ class ConnGUI():
                                     width=5, bg="white", fg="#098577",
                                     command=self.new_chart)
 
-        self.btn_kill_chart = Button(self.frame, text="-", state="disabled",
-                                     width=5, bg="white", fg="#CC252C",
-                                     command=self.kill_chart)
+        
         self.save = False
         self.SaveVar = IntVar()
         self.save_check = Checkbutton(self.frame, text="Save data", variable=self.SaveVar,
@@ -217,9 +220,9 @@ class ConnGUI():
 
         self.btn_start_stream.grid(column=3, row=1, padx=self.padx)
         self.btn_stop_stream.grid(column=3, row=2, padx=self.padx)
-
+        
+        self.btn_start_gph.grid(column=5, row=1, padx=self.padx)
         self.btn_add_chart.grid(column=4, row=1, padx=self.padx)
-        self.btn_kill_chart.grid(column=5, row=1, padx=self.padx)
 
         self.save_check.grid(column=4, row=2, columnspan=2)
         self.separator.place(relx=0.58, rely=0, relwidth=0.001, relheight=1)
@@ -239,6 +242,23 @@ class ConnGUI():
         self.btn_stop_stream["state"]="active"
         self.serial.t1 = threading.Thread(target=self.serial.SerialDataStream,args=(self,),daemon=True)
         self.serial.t1.start()
+        
+    def startgraph(self):
+        if self.graph:
+                self.graph = False
+        else:
+                self.graph = True
+    def UpdateChart(self):
+        try:
+            
+                self.chartMaster.ax.clear()
+                self.char = self.chartMaster.ax
+                self.y = self.data.Ydis[0]
+                self.x = self.data.Xdis
+                self.data.plotingShit(self)
+                self.chartMaster.fig.canvas.draw()
+        except Exception as e:
+            print(e)
     def stop_stream(self):
         self.btn_start_stream["state"]="active"
         self.btn_stop_stream["state"]="disabled"
@@ -264,6 +284,7 @@ class DisGUI():
     def AddChannelMaster(self):
         self.AddMasterFrame()
         self.AdjustRootFrame()
+        self.AddGraph()
     def AddMasterFrame(self):
         self.frame = LabelFrame(self.root, text="Displayed Manager", padx=5,pady=5, bg="white")
         self.frame.grid(padx=5,column=self.frameCol,row=self.frameRow,columnspan=9,sticky=NW)
@@ -272,10 +293,13 @@ class DisGUI():
         RootH = 600
         self.root.geometry(f"{RootWD}x{RootH}")
     def AddGraph(self):
-        pass 
+        self.fig = plt.Figure(figsize=(7,5),dpi=80)
+        self.ax= self.fig.add_subplot(111)
+        self.graphic = FigureCanvasTkAgg(self.fig, master = self.frame)
+        self.graphic.get_tk_widget().grid(column=1,row=0,columnspan=4,sticky=N)
 
 if __name__ == "__main__":
     RootGUI()
     ComGui()
     ConnGUI()
-    DisGUI()
+    #DisGUI()
