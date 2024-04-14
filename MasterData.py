@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from collections import deque
 class DataMaster():
     def __init__(self):
         
@@ -9,6 +10,7 @@ class DataMaster():
         self.XData = []
         self.YData = []
         self.DisplayTimeRange = 5
+        self.mydeque = deque(maxlen=150)
 
     def DecodeMsg(self):
         temp = self.RowMsg.decode('ascii').strip().split(',')
@@ -31,13 +33,15 @@ class DataMaster():
         self.Channels = [f"Ch{ch}" for ch in range(self.SynchChannel)]
 
     def buildYdata(self):
+        self.YData = []
         for _ in range(self.SynchChannel):
             self.YData.append([])
 
     def ClearData(self):
         self.RowMsg = ""
         self.msg = 0
-        self.Ydata = []
+        self.YData = []
+        self.XData= []
     def SetRefTime(self):
         if len(self.XData) == 0:
             self.RefTime = time.perf_counter()
@@ -51,9 +55,11 @@ class DataMaster():
             self.XData.append(time.perf_counter()-self.RefTime)
 
     def UpdataYdata(self):
+        self.mydeque.append(self.msg[0])
         for ChNumber in range(self.SynchChannel):
             self.YData[ChNumber].append(self.msg[ChNumber])
     def AdjustData(self):
+        
         lenXdata = len(self.XData)
         if (self.XData[lenXdata-1]-self.XData[0])> self.DisplayTimeRange:
             del self.XData[0]
@@ -62,6 +68,10 @@ class DataMaster():
         x = np.array(self.XData)
         self.Xdis = np.linspace(x.min(), x.max(), len(x), endpoint=0)
         self.Ydis=  np.array(self.YData)
+        
+        
 
     def plotingShit(self,gui):
-        gui.char.plot(gui.x,gui.y)
+        gui.char.plot( gui.y, dash_capstyle='projecting', linewidth=1)
+        
+        
