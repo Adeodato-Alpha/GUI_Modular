@@ -5,8 +5,9 @@ import threading
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as anime 
-
+from scipy.signal import lfilter, firwin
 from collections import deque
+import numpy as np
 class RootGUI():
     def __init__(self,serial,data):
         '''Initializing the root GUI and other comps of the program'''
@@ -248,9 +249,16 @@ class ConnGUI():
     #Function that is suppose to plot live data
     def UpdateChart(self):
         try:
-            y =float(self.data.msg[0]) # Convert data to float
-            self.chartMaster.y_data.append(y)   
-            self.chartMaster.line.set_data(range(len(self.chartMaster.y_data)),self.chartMaster.y_data)
+            for i, line in enumerate(self.chartMaster.lines):
+                # Get the data for the current signal
+                signal_data = self.data.msg[i]
+
+                # Convert data to float and append to y_data
+                y = float(signal_data)  # Assuming each element in self.data.msg is a float
+                self.chartMaster.y_data[i].append(y)  
+
+                # Update the line data
+                line.set_data(range(len(self.chartMaster.y_data[i])), self.chartMaster.y_data[i])
             self.chartMaster.ax.relim()
             self.chartMaster.ax.autoscale_view()
             self.chartMaster.fig.canvas.draw()
@@ -259,8 +267,8 @@ class ConnGUI():
         except Exception as e:
             print(e)
         if self.serial.threading:
-            self.root.after(35, self.UpdateChart)
-        
+            self.root.after(20, self.UpdateChart)
+    
             
 
     def stop_stream(self):
@@ -297,9 +305,12 @@ class DisGUI():
         RootH = 600
         self.root.geometry(f"{RootWD}x{RootH}")
     def AddGraph(self):
-        self.y_data = deque(maxlen=120)
+        self.lines =[]
+        self.y_data = [deque(maxlen=120) for _ in range(8)]
         self.fig, self.ax = plt.subplots()
-        self.line, = self.ax.plot([],'-')
+        for _ in range(8):
+            line, = self.ax.plot([], '-')
+            self.lines.append(line)
         #self.fig = plt.Figure(figsize=(7, 5), dpi=80)
         #self.ax = self.fig.add_subplot(111)
         #self.ax.set_ylim([0,27000])
